@@ -112,7 +112,7 @@ struct StaffApprovalDetailView: View {
                     .disabled(rejectionReason.isEmpty)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(rejectionReason.isEmpty ? Color.gray : Color.blue)
+                    .background(rejectionReason.isEmpty ? Color.gray : Color.alpseOrange)
                     .foregroundColor(.white)
                     .cornerRadius(15)
                     
