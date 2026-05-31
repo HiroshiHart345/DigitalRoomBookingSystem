@@ -2,13 +2,13 @@
 //  AuthViewModel.swift
 //  ALPSE
 //
-//  Created by ~ Natalie ~ on 31/05/26.
+//  Created by ~ Natalie ~ on 28/05/26.
 //
 
 
 import Foundation
 import Combine
-import FirebaseAuth 
+import FirebaseAuth
 import FirebaseFirestore
 
 class AuthViewModel: ObservableObject {
@@ -79,5 +79,64 @@ class AuthViewModel: ObservableObject {
         }
 
     }
+
+    func signUp() {
+
+        authService.register(
+            email: email,
+            password: password
+        ) { [weak self] result in
+
+            DispatchQueue.main.async {
+
+                switch result {
+
+                case .success(let authResult):
+
+                    let user = UserModel(
+                        id: authResult.user.uid,
+                        name: self?.name ?? "",
+                        email: self?.email ?? "",
+                        role: "student",
+                        organization: self?.organization ?? ""
+                    )
+
+                    self?.authRepository.saveUser(
+                        user: user
+                    ) { result in
+
+                        DispatchQueue.main.async {
+
+                            switch result {
+
+                            case .success:
+
+                                self?.successMessage =
+                                "Account Created"
+
+                            case .failure(let error):
+
+                                self?.errorMessage =
+                                error.localizedDescription
+
+                            }
+
+                        }
+
+                    }
+
+                case .failure(let error):
+
+                    self?.errorMessage =
+                    error.localizedDescription
+
+                }
+
+            }
+
+        }
+
+    }
+    
 
 }
