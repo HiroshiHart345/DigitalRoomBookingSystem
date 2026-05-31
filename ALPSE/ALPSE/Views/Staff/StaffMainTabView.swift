@@ -65,21 +65,21 @@ extension ApprovalViewModel {
         
         vm.pendingBookings = [
             Booking(
-                id: "b1", roomId: "r505", roomName: "Room 505",
+                id: "b1", roomId: "r505", roomName: "Room 505", roomCapacity: 40,
                 userId: "u1", userName: "Evelin", organization: "BEM",
                 activityName: "Rapat Rutin", description: "Rapat BEM Mingguan",
                 date: Timestamp(date: Date()), startTime: Timestamp(date: Date()), endTime: Timestamp(date: Date().addingTimeInterval(3600)),
                 status: "Pending SA Approval", rejectionReason: "", createdAt: Timestamp(date: Date()), facultyName: "Informatics"
             ),
             Booking(
-                id: "b2", roomId: "r506", roomName: "Room 506",
+                id: "b2", roomId: "r506", roomName: "Room 506", roomCapacity: 50,
                 userId: "u2", userName: "Sharon Natalie Sutanto", organization: "UKM Basket",
                 activityName: "Gladi Resik", description: "Gladi Resik Untuk Pertunjukan Basket",
                 date: Timestamp(date: Date()), startTime: Timestamp(date: Date()), endTime: Timestamp(date: Date().addingTimeInterval(7200)),
                 status: "Pending SA Approval", rejectionReason: "", createdAt: Timestamp(date: Date()), facultyName: "Informatics"
             ),
             Booking(
-                id: "b3", roomId: "raud", roomName: "Auditorium",
+                id: "b3", roomId: "raud", roomName: "Auditorium", roomCapacity: 300,
                 userId: "u3", userName: "Hiroshi", organization: "UKM Musik",
                 activityName: "Konser Akhir Tahun", description: "Konser besar",
                 date: Timestamp(date: Date()), startTime: Timestamp(date: Date()), endTime: Timestamp(date: Date().addingTimeInterval(14400)),

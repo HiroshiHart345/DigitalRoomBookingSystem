@@ -44,6 +44,7 @@ class BookingViewModel: ObservableObject {
             id: "",
             roomId: room.id,
             roomName: room.name,
+            roomCapacity: room.capacity,
             userId: user.id,
             userName: user.name,
             organization: user.organization,

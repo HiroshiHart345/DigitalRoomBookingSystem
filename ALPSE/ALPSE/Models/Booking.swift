@@ -15,6 +15,7 @@ struct Booking: Identifiable, Codable {
     
     var roomId: String
     var roomName: String
+    var roomCapacity: Int
     
     var userId: String
     var userName: String

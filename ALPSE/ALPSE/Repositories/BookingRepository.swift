@@ -65,6 +65,7 @@ class BookingRepository {
                 bookingsRef.addDocument(data: [
                     "roomId": booking.roomId,
                     "roomName": booking.roomName,
+                    "roomCapacity": booking.roomCapacity,
 
                     "userId": booking.userId,
                     "userName": booking.userName,
@@ -121,6 +122,7 @@ class BookingRepository {
                         id: doc.documentID,
                         roomId: data["roomId"] as? String ?? "",
                         roomName: data["roomName"] as? String ?? "",
+                        roomCapacity: data["roomCapacity"] as? Int ?? 0,
                         userId: data["userId"] as? String ?? "",
                         userName: data["userName"] as? String ?? "",
                         organization: data["organization"] as? String ?? "",
@@ -144,7 +146,6 @@ class BookingRepository {
     func fetchPendingBookings(forStatus status: String, faculty: String? = nil, completion: @escaping (Result<[Booking], Error>) -> Void) {
         var query: Query = db.collection("bookings").whereField("status", isEqualTo: status)
         
-        // Jika ada parameter faculty (khusus untuk Academic Support), lakukan filtering
         if let faculty = faculty, !faculty.isEmpty {
             query = query.whereField("facultyName", isEqualTo: faculty)
         }
@@ -164,6 +165,7 @@ class BookingRepository {
                     id: doc.documentID,
                     roomId: data["roomId"] as? String ?? "",
                     roomName: data["roomName"] as? String ?? "",
+                    roomCapacity: data["roomCapacity"] as? Int ?? 0,
                     userId: data["userId"] as? String ?? "",
                     userName: data["userName"] as? String ?? "",
                     organization: data["organization"] as? String ?? "",

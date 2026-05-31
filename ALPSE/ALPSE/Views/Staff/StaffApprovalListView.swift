@@ -23,7 +23,7 @@ struct StaffApprovalListView: View {
                                 Image(systemName: "person.2.fill")
                                     .foregroundColor(.gray)
                                     .font(.caption)
-                                Text("Capacity: N/A")
+                                Text("Capacity: \(booking.roomCapacity)")
                                     .font(.caption)
                                     .foregroundColor(.gray)
                             }

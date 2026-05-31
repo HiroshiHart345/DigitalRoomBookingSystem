@@ -123,6 +123,7 @@ struct BookingHistoryView: View {
 
                         roomId: data["roomId"] as? String ?? "",
                         roomName: data["roomName"] as? String ?? "",
+                        roomCapacity: data["roomCapacity"] as? Int ?? 0,
 
                         userId: data["userId"] as? String ?? "",
                         userName: data["userName"] as? String ?? "",
