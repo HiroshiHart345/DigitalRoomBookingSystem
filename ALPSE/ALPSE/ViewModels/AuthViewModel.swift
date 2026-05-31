@@ -138,5 +138,18 @@ class AuthViewModel: ObservableObject {
 
     }
     
+    func logout() {
+        do {
+            try Auth.auth().signOut()
+            DispatchQueue.main.async {
+                self.loggedInUser = nil
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+    
 
 }

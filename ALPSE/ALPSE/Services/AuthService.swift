@@ -56,6 +56,12 @@ class AuthService {
         }
 
     }
+    
+    func logout() throws {
+
+        try Auth.auth().signOut()
+
+    }
 
 
 }
