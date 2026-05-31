@@ -139,4 +139,64 @@ class BookingRepository {
                 completion(.success(bookings))
             }
     }
+    
+    /// Function for fetching data based on its pending status
+    func fetchPendingBookings(forStatus status: String, faculty: String? = nil, completion: @escaping (Result<[Booking], Error>) -> Void) {
+        var query: Query = db.collection("bookings").whereField("status", isEqualTo: status)
+        
+        // Jika ada parameter faculty (khusus untuk Academic Support), lakukan filtering
+        if let faculty = faculty, !faculty.isEmpty {
+            query = query.whereField("facultyName", isEqualTo: faculty)
+        }
+        
+        query.getDocuments { snapshot, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+            guard let documents = snapshot?.documents else {
+                completion(.success([]))
+                return
+            }
+            let bookings = documents.map { doc in
+                let data = doc.data()
+                return Booking(
+                    id: doc.documentID,
+                    roomId: data["roomId"] as? String ?? "",
+                    roomName: data["roomName"] as? String ?? "",
+                    userId: data["userId"] as? String ?? "",
+                    userName: data["userName"] as? String ?? "",
+                    organization: data["organization"] as? String ?? "",
+                    activityName: data["activityName"] as? String ?? "",
+                    description: data["description"] as? String ?? "",
+                    date: data["date"] as? Timestamp ?? Timestamp(),
+                    startTime: data["startTime"] as? Timestamp ?? Timestamp(),
+                    endTime: data["endTime"] as? Timestamp ?? Timestamp(),
+                    status: data["status"] as? String ?? "",
+                    rejectionReason: data["rejectionReason"] as? String ?? "",
+                    createdAt: data["createdAt"] as? Timestamp ?? Timestamp(),
+                    facultyName: data["facultyName"] as? String ?? ""
+                )
+            }
+            completion(.success(bookings))
+        }
+    }
+    
+    /// Function for updating status approve or reject
+    func updateBookingStatus(bookingId: String, newStatus: String, rejectionReason: String = "", completion: @escaping (Result<Void, Error>) -> Void) {
+        var updateData: [String: Any] = ["status": newStatus]
+        if !rejectionReason.isEmpty {
+            updateData["rejectionReason"] = rejectionReason
+        }
+        
+        db.collection("bookings")
+            .document(bookingId)
+            .updateData(updateData) { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+    }
 }
