@@ -38,9 +38,7 @@ class BookingViewModel: ObservableObject {
         let start = Timestamp(date: startDateTime)
         let end = Timestamp(date: endDateTime)
 
-        let status = room.facultyRoom
-            ? "Pending AS Approval"
-            : "Pending PM Approval"
+        let status = "Pending SA Approval"
 
         let booking = Booking(
             id: "",
