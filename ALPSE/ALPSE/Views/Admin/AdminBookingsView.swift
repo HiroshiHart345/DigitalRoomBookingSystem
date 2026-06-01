@@ -275,13 +275,27 @@ struct AdminBookingUpdateView: View {
                     .font(.caption)
                 }
 
-                Section("Time Slot") {
+                Section("Start Time") {
+                    DatePicker(
+                        "Start",
+                        selection: $startTime,
+                        displayedComponents: .hourAndMinute
+                    )
+                }
+
+                Section("End Time") {
+                    DatePicker(
+                        "End",
+                        selection: $endTime,
+                        displayedComponents: .hourAndMinute
+                    )
+                }
+
+                Section("Room Availability") {
                     AdminAvailabilityTimeSlots(
                         bookedRanges: bookedRangesOnSelectedDate,
                         currentRange: currentRange,
-                        selectedDate: date,
-                        startTime: $startTime,
-                        endTime: $endTime
+                        selectedDate: date
                     )
                 }
 

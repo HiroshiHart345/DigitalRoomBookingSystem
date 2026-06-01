@@ -18,21 +18,15 @@ struct TimeSlot: Identifiable, Hashable {
     }
 }
 
+/// Read-only reference view. Shows which hourly slots on `selectedDate`
+/// are taken by other bookings (red), which one belongs to the booking
+/// being edited (orange), and which are free. Does NOT drive selection —
+/// admin still picks start/end via the standard DatePicker next to it.
 struct AdminAvailabilityTimeSlots: View {
 
-    /// Already-booked time ranges on the same date for the same room.
-    /// (Excludes the booking currently being edited.)
     var bookedRanges: [(start: Date, end: Date)]
-
-    /// The current booking's time range (highlighted orange).
     var currentRange: (start: Date, end: Date)?
-
-    /// Date being booked — used to project the slot hour onto a concrete Date.
     var selectedDate: Date
-
-    /// Outputs.
-    @Binding var startTime: Date
-    @Binding var endTime: Date
 
     private let slots: [TimeSlot] = (7..<17).map { hour in
         TimeSlot(startHour: hour, endHour: hour + 1)
@@ -40,8 +34,8 @@ struct AdminAvailabilityTimeSlots: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Pick Your Time")
-                .font(.subheadline)
+            Text("Room Availability (reference)")
+                .font(.caption)
                 .foregroundColor(.gray)
 
             ForEach(slots, id: \.id) { slot in
@@ -49,28 +43,21 @@ struct AdminAvailabilityTimeSlots: View {
                 let slotEnd = projectedDate(hour: slot.endHour)
                 let availability = classify(slotStart: slotStart, slotEnd: slotEnd)
 
-                Button {
-                    guard availability != .unavailable else { return }
-                    startTime = slotStart
-                    endTime = slotEnd
-                } label: {
-                    HStack {
-                        Text(slot.label)
-                            .foregroundColor(textColor(for: availability))
-                        Spacer()
-                        if availability == .unavailable {
-                            Text("Not Available")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                        if isSelected(slotStart: slotStart, slotEnd: slotEnd) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.alpseOrange)
-                        }
+                HStack {
+                    Text(slot.label)
+                        .foregroundColor(textColor(for: availability))
+                    Spacer()
+                    if availability == .unavailable {
+                        Text("Not Available")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    } else if availability == .current {
+                        Text("Current Booking")
+                            .font(.caption)
+                            .foregroundColor(.alpseOrange)
                     }
-                    .padding(.vertical, 6)
                 }
-                .disabled(availability == .unavailable)
+                .padding(.vertical, 4)
                 Divider()
             }
         }
@@ -102,10 +89,6 @@ struct AdminAvailabilityTimeSlots: View {
         case .current: return .alpseOrange
         case .unavailable: return .red
         }
-    }
-
-    private func isSelected(slotStart: Date, slotEnd: Date) -> Bool {
-        startTime == slotStart && endTime == slotEnd
     }
 
     private func projectedDate(hour: Int) -> Date {
