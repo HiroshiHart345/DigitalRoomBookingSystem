@@ -80,7 +80,7 @@ struct RoomScheduleCheckView: View {
                     user: user, room: room, selectedDate: selectedDate,
                     timeSlots: selectedSlots.sorted()
                 )) {
-                    Text("Lanjut (\(selectedSlots.count) slot)")
+                    Text("Book (\(selectedSlots.count) slot)")
                         .font(.headline).frame(maxWidth: .infinity).padding()
                         .background(Color.alpseOrange).foregroundColor(.white).cornerRadius(15)
                 }
