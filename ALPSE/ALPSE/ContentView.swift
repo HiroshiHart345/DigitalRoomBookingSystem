@@ -13,8 +13,11 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             if let user = viewModel.loggedInUser {
-                if user.role.lowercased() == "student" {
+                let normalizedRole = user.role.lowercased()
+                if normalizedRole == "student" {
                     StudentHomeView(user: user)
+                } else if normalizedRole == "admin" {
+                    AdminMainTabView(user: user)
                 } else {
                     StaffMainTabView(user: user)
                 }
