@@ -4,7 +4,6 @@
 //
 //  Created by ~ Natalie ~ on 28/05/26.
 //
-
 import SwiftUI
 
 struct ContentView: View {
@@ -14,7 +13,7 @@ struct ContentView: View {
         NavigationStack {
             if let user = viewModel.loggedInUser {
                 if user.role.lowercased() == "student" {
-                    StudentHomeView(user: user)
+                    BookingHistoryView(user: user)
                 } else {
                     StaffMainTabView(user: user)
                 }
