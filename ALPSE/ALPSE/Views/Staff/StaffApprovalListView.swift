@@ -8,53 +8,67 @@
 import SwiftUI
 
 struct StaffApprovalListView: View {
-    @ObservedObject var viewModel: ApprovalViewModel
+    let user: UserModel
+    @StateObject private var viewModel: ApprovalViewModel
+    @State private var selectedTab = 0
+    @State private var showProfileSheet = false
+    
+    init(user: UserModel) {
+        self.user = user
+        let normalizedRole = user.role.lowercased()
+        let role: StaffRole
+        if normalizedRole.contains("academic") {
+            role = .academicSupport
+        } else if normalizedRole.contains("property") {
+            role = .propertyManagement
+        } else {
+            role = .studentAffairs
+        }
+        
+        _viewModel = StateObject(wrappedValue: ApprovalViewModel(role: role, faculty: user.organization))
+    }
     
     var body: some View {
         NavigationStack {
-            List(viewModel.pendingBookings) { booking in
-                NavigationLink(destination: StaffApprovalDetailView(booking: booking, viewModel: viewModel)) {
+            VStack(spacing: 0) {
+                // Header ala Student View
+                HStack(alignment: .center) {
+                    Text("Approval")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .padding(.leading, 4)
                     
-                    HStack {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text(booking.roomName)
-                                .font(.headline)
-                            HStack {
-                                Image(systemName: "person.2.fill")
-                                    .foregroundColor(.gray)
+                    Spacer()
+                    
+                    Button { showProfileSheet = true } label: {
+                        Image(systemName: "person.crop.circle.fill")
+                            .symbolRenderingMode(.palette)
+                            .foregroundStyle(.white, Color.alpseOrange)
+                            .font(.system(size: 44))
+                    }
+                }
+                .padding(20)
+                .background(Color(UIColor.systemBackground))
+                
+                List(viewModel.pendingBookings) { booking in
+                    NavigationLink(destination: StaffApprovalDetailView(booking: booking, viewModel: viewModel)) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(booking.roomName).font(.headline)
+                                Text(booking.activityName).font(.subheadline).foregroundColor(.secondary)
+                                Text(booking.facultyName == "" ? "Not faculty room" : "Faculty room")
                                     .font(.caption)
-                                Text("Capacity: \(booking.roomCapacity)")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(booking.facultyName == "" ? .red : .green)
                             }
                         }
-                        
-                        Spacer()
-                        
-                        if !booking.facultyName.isEmpty && booking.facultyName != "Umum" {
-                            Text("Faculty Room")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                        } else {
-                            Text("Not Faculty Room")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
+                        .padding(.vertical, 8)
                     }
-                    .padding(.vertical, 8)
                 }
+                .listStyle(.insetGrouped)
             }
-            .navigationTitle("Need \(viewModel.currentRole.rawValue) Approval")
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                viewModel.loadPendingBookings()
-            }
-            .overlay(Group {
-                if viewModel.pendingBookings.isEmpty {
-                    Text("No Pending Approvals")
-                        .foregroundColor(.gray)
-                }
-            })
+            .navigationBarHidden(true)
+            .sheet(isPresented: $showProfileSheet) { ProfileView(user: user) }
+            .onAppear { viewModel.loadPendingBookings() }
         }
     }
 }

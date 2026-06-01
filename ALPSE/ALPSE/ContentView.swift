@@ -15,7 +15,7 @@ struct ContentView: View {
                 if user.role.lowercased() == "student" {
                     BookingHistoryView(user: user)
                 } else {
-                    StaffMainTabView(user: user)
+                    StaffApprovalListView(user: user)
                 }
             } else {
                 LoginView()
