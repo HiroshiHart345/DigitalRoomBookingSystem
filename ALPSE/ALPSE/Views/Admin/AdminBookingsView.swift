@@ -231,8 +231,16 @@ struct AdminBookingUpdateView: View {
     @State private var date: Date = Date()
     @State private var startTime: Date = Date()
     @State private var endTime: Date = Date()
-    @State private var accepted: Bool = true
+    @State private var status: String = "Pending SA Approval"
     @State private var reason: String = ""
+
+    private let statusOptions: [String] = [
+        "Pending SA Approval",
+        "Pending AS Approval",
+        "Pending PM Approval",
+        "Approved",
+        "Rejected"
+    ]
 
     private var currentBookingDate: Date {
         Calendar.current.startOfDay(for: booking.date.dateValue())
@@ -300,8 +308,14 @@ struct AdminBookingUpdateView: View {
                 }
 
                 Section("Status") {
-                    Toggle("Accepted", isOn: $accepted)
-                    if !accepted {
+                    Picker("Status", selection: $status) {
+                        ForEach(statusOptions, id: \.self) { option in
+                            Text(option).tag(option)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    if status == "Rejected" {
                         TextField("Rejection Reason", text: $reason)
                     }
                 }
@@ -313,7 +327,7 @@ struct AdminBookingUpdateView: View {
                             date: date,
                             startTime: startTime,
                             endTime: endTime,
-                            accepted: accepted,
+                            status: status,
                             reason: reason
                         )
                         dismiss()
@@ -354,8 +368,7 @@ struct AdminBookingUpdateView: View {
         date = booking.date.dateValue()
         startTime = booking.startTime.dateValue()
         endTime = booking.endTime.dateValue()
-        let lower = booking.status.lowercased()
-        accepted = !lower.contains("reject")
+        status = statusOptions.contains(booking.status) ? booking.status : "Pending SA Approval"
         reason = booking.rejectionReason
     }
 }

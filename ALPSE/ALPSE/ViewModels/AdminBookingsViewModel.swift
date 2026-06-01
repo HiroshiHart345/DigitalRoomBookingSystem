@@ -64,10 +64,10 @@ class AdminBookingsViewModel: ObservableObject {
         date: Date,
         startTime: Date,
         endTime: Date,
-        accepted: Bool,
+        status: String,
         reason: String
     ) {
-        let status = accepted ? "Approved" : "Rejected"
+        let finalReason = status == "Rejected" ? reason : ""
 
         repository.adminUpdateBooking(
             bookingId: id,
@@ -75,7 +75,7 @@ class AdminBookingsViewModel: ObservableObject {
             startTime: Timestamp(date: startTime),
             endTime: Timestamp(date: endTime),
             status: status,
-            rejectionReason: accepted ? "" : reason
+            rejectionReason: finalReason
         ) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
