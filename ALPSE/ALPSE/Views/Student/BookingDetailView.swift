@@ -5,12 +5,10 @@
 //  Created by ~ Natalie ~ on 28/05/26.
 //
 
-
 import SwiftUI
 import FirebaseFirestore
 
 struct BookingDetailView: View {
-
     let booking: Booking
 
     func formatDate(_ timestamp: Timestamp) -> String {
@@ -26,67 +24,58 @@ struct BookingDetailView: View {
     }
 
     var body: some View {
-
-        ZStack {
-
-            Color.alpseOrange
-                .ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 18) {
-
-                Text(booking.roomName)
-                    .font(.largeTitle)
-                    .bold()
-                    .foregroundColor(.white)
-
-                Text(formatDate(booking.date))
-                    .font(.headline)
-                    .foregroundColor(.white)
-
-                Text("\(formatTime(booking.startTime)) - \(formatTime(booking.endTime))")
-                    .font(.headline)
-                    .foregroundColor(.white)
-
-                Rectangle()
-                    .fill(Color.white.opacity(0.8))
-                    .frame(height: 1)
-                    .padding(.vertical, 5)
-
-                Text("Program's Name :   \(booking.activityName)")
-                    .foregroundColor(.white)
-                
-                Text("Description          : ")
-                    .foregroundColor(.white)
-
-                Text(booking.description)
-                    .foregroundColor(.white)
-
-                Text(booking.status)
-                    .fontWeight(.bold)
-                    .foregroundColor(.alpseOrange)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.white)
-                    .cornerRadius(10)
-
-                if !booking.rejectionReason.isEmpty {
-
-                    Text("Reason:")
-                        .bold()
-                        .foregroundColor(.white)
-
-                    Text(booking.rejectionReason)
-                        .foregroundColor(.red)
-
-                }
-
-                Spacer()
-
+        Form {
+            Section(header: Text("Schedule & Room")) {
+                LabeledContent("Room", value: booking.roomName)
+                LabeledContent("Date", value: formatDate(booking.date))
+                LabeledContent("Time", value: "\(formatTime(booking.startTime)) - \(formatTime(booking.endTime))")
             }
-            .padding()
-
+            
+            Section(header: Text("Activity Details")) {
+                LabeledContent("Program", value: booking.activityName)
+                LabeledContent("Organization", value: booking.organization)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Description")
+                        .foregroundColor(.secondary)
+                    Text(booking.description)
+                        .padding(.top, 2)
+                }
+            }
+            
+            Section(header: Text("Approval Status")) {
+                HStack {
+                    Text("Status")
+                    Spacer()
+                    Text(booking.status)
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(statusColor(for: booking.status))
+                        .clipShape(Capsule())
+                }
+                
+                if !booking.rejectionReason.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Rejection Reason")
+                            .foregroundColor(.secondary)
+                        Text(booking.rejectionReason)
+                            .foregroundColor(.red)
+                            .padding(.top, 2)
+                    }
+                }
+            }
         }
-
+        .navigationTitle(booking.roomName)
+        .navigationBarTitleDisplayMode(.inline)
     }
-
+    
+    private func statusColor(for status: String) -> Color {
+        if status.contains("Pending") { return .orange }
+        if status == "Approved" { return .green }
+        if status.contains("Rejected") { return .red }
+        return .gray
+    }
 }
