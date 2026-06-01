@@ -13,7 +13,23 @@ class AdminBookingsViewModel: ObservableObject {
     @Published var errorMessage: String = ""
     @Published var isLoading: Bool = false
 
+    /// Per-room conflict bookings (fetched on demand for the update sheet).
+    @Published var roomBookings: [Booking] = []
+
     private let repository = BookingRepository()
+
+    func fetchRoomBookings(roomId: String, excluding bookingId: String) {
+        repository.fetchBookingsForRoom(roomId: roomId, excludingBookingId: bookingId) { [weak self] result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let bookings):
+                    self?.roomBookings = bookings
+                case .failure(let error):
+                    self?.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
 
     func fetchBookings() {
         isLoading = true

@@ -234,18 +234,57 @@ struct AdminBookingUpdateView: View {
     @State private var accepted: Bool = true
     @State private var reason: String = ""
 
+    private var currentBookingDate: Date {
+        Calendar.current.startOfDay(for: booking.date.dateValue())
+    }
+
+    private var unavailableDates: Set<Date> {
+        Set(viewModel.roomBookings.map {
+            Calendar.current.startOfDay(for: $0.date.dateValue())
+        })
+    }
+
+    private var bookedRangesOnSelectedDate: [(start: Date, end: Date)] {
+        viewModel.roomBookings
+            .filter { Calendar.current.isDate($0.date.dateValue(), inSameDayAs: date) }
+            .map { ($0.startTime.dateValue(), $0.endTime.dateValue()) }
+    }
+
+    private var currentRange: (start: Date, end: Date)? {
+        guard Calendar.current.isDate(currentBookingDate, inSameDayAs: date) else {
+            return nil
+        }
+        return (booking.startTime.dateValue(), booking.endTime.dateValue())
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+
                 Section("Date") {
-                    DatePicker("Pick Your Date", selection: $date, displayedComponents: .date)
+                    AdminAvailabilityCalendar(
+                        unavailableDates: unavailableDates,
+                        currentBookingDate: currentBookingDate,
+                        selectedDate: $date
+                    )
+                    .frame(minHeight: 320)
+                    HStack(spacing: 16) {
+                        legendDot(color: .red, label: "Unavailable")
+                        legendDot(color: .orange, label: "Current")
+                    }
+                    .font(.caption)
                 }
-                Section("Start Time") {
-                    DatePicker("Start", selection: $startTime, displayedComponents: .hourAndMinute)
+
+                Section("Time Slot") {
+                    AdminAvailabilityTimeSlots(
+                        bookedRanges: bookedRangesOnSelectedDate,
+                        currentRange: currentRange,
+                        selectedDate: date,
+                        startTime: $startTime,
+                        endTime: $endTime
+                    )
                 }
-                Section("End Time") {
-                    DatePicker("End", selection: $endTime, displayedComponents: .hourAndMinute)
-                }
+
                 Section("Status") {
                     Toggle("Accepted", isOn: $accepted)
                     if !accepted {
@@ -283,7 +322,17 @@ struct AdminBookingUpdateView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .onAppear(perform: prefill)
+            .onAppear {
+                prefill()
+                viewModel.fetchRoomBookings(roomId: booking.roomId, excluding: booking.id)
+            }
+        }
+    }
+
+    private func legendDot(color: Color, label: String) -> some View {
+        HStack(spacing: 4) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(label).foregroundColor(.gray)
         }
     }
 
