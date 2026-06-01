@@ -14,7 +14,7 @@ struct RoomScheduleCheckView: View {
     
     @State private var selectedDate = Date()
     @State private var allRoomBookings: [Booking] = []
-    @State private var selectedSlots: [String] = [] // Menggunakan Array agar urut
+    @State private var selectedSlots: [String] = []
     
     var generatedTimeSlots: [String] {
         var slots: [String] = []
@@ -28,7 +28,7 @@ struct RoomScheduleCheckView: View {
         }
         return slots
     }
-
+    
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -71,7 +71,7 @@ struct RoomScheduleCheckView: View {
                             }
                         }
                     }
-                    .disabled(isBooked || !isSelectable(slot)) // Tetap tidak bisa klik jika booked
+                    .disabled(isBooked || !isSelectable(slot))
                 }
             }
             
@@ -94,37 +94,30 @@ struct RoomScheduleCheckView: View {
         }
     }
     
-    
-
-    // LOGIKA SELECTION
     func isSelectable(_ slot: String) -> Bool {
-            // JIKA sudah dipilih, kita HARUS mengizinkan klik (untuk unselect)
-            if selectedSlots.contains(slot) { return true }
-            
-            // JIKA belum dipilih, baru kita lakukan validasi urutan
-            if selectedSlots.isEmpty { return true }
-            
-            guard let currentIndex = generatedTimeSlots.firstIndex(of: slot) else { return false }
-            
-            let selectedIndices = selectedSlots.compactMap { generatedTimeSlots.firstIndex(of: $0) }
-            guard let minIndex = selectedIndices.min(), let maxIndex = selectedIndices.max() else { return true }
-            
-            // Izinkan jika slot bersebelahan dengan rentang yang sudah dipilih
-            return currentIndex == minIndex - 1 || currentIndex == maxIndex + 1
-        }
-
+        if selectedSlots.contains(slot) { return true }
+        if selectedSlots.isEmpty { return true }
+        
+        guard let currentIndex = generatedTimeSlots.firstIndex(of: slot) else { return false }
+        
+        let selectedIndices = selectedSlots.compactMap { generatedTimeSlots.firstIndex(of: $0) }
+        guard let minIndex = selectedIndices.min(), let maxIndex = selectedIndices.max() else { return true }
+        
+        return currentIndex == minIndex - 1 || currentIndex == maxIndex + 1
+    }
+    
     func toggleSelection(_ slot: String, isBooked: Bool) {
         if isBooked { return }
         if selectedSlots.contains(slot) { selectedSlots.removeAll { $0 == slot } }
         else { selectedSlots.append(slot) }
     }
-
+    
     func isSlotBooked(_ slot: String) -> Bool {
-
+        
         let calendar = Calendar.current
-
+        
         let bookingsOnDate = allRoomBookings.filter { booking in
-
+            
             calendar.isDate(
                 booking.date.dateValue(),
                 inSameDayAs: selectedDate
@@ -132,37 +125,37 @@ struct RoomScheduleCheckView: View {
             &&
             !booking.status.contains("Rejected")
         }
-
+        
         let formatter = DateFormatter()
         formatter.dateFormat = "HH.mm"
-
+        
         let parts = slot.components(separatedBy: " - ")
-
+        
         guard
             let slotStartTime = formatter.date(from: parts[0]),
             let slotEndTime = formatter.date(from: parts[1])
         else {
             return false
         }
-
+        
         return bookingsOnDate.contains { booking in
-
+            
             let bookingStart =
-                formatter.date(
-                    from: formatter.string(
-                        from: booking.startTime.dateValue()
-                    )
-                )!
-
+            formatter.date(
+                from: formatter.string(
+                    from: booking.startTime.dateValue()
+                )
+            )!
+            
             let bookingEnd =
-                formatter.date(
-                    from: formatter.string(
-                        from: booking.endTime.dateValue()
-                    )
-                )!
-
+            formatter.date(
+                from: formatter.string(
+                    from: booking.endTime.dateValue()
+                )
+            )!
+            
             return slotStartTime < bookingEnd &&
-                   slotEndTime > bookingStart
+            slotEndTime > bookingStart
         }
     }
     
@@ -171,11 +164,10 @@ struct RoomScheduleCheckView: View {
     func fetchBookings() {
         Firestore.firestore()
             .collection("bookings")
-            .whereField("roomId", isEqualTo: room.id) // Tarik semua jadwal untuk ruangan ini saja
+            .whereField("roomId", isEqualTo: room.id)
             .getDocuments { snapshot, error in
                 guard let documents = snapshot?.documents else { return }
                 
-                // Parsing data Firestore ke array model Booking
                 self.allRoomBookings = documents.compactMap { doc in
                     let data = doc.data()
                     return Booking(
