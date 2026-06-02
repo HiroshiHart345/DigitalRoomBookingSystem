@@ -157,6 +157,14 @@ struct AdminUserUpdateView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name: String = ""
 
+    private var trimmedName: String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isFormValid: Bool {
+        !trimmedName.isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -170,16 +178,17 @@ struct AdminUserUpdateView: View {
 
                 Section {
                     Button {
-                        viewModel.updateName(uid: user.id, newName: name)
+                        viewModel.updateName(uid: user.id, newName: trimmedName)
                         dismiss()
                     } label: {
                         Text("Save")
                             .frame(maxWidth: .infinity)
                             .foregroundColor(.white)
                             .padding(.vertical, 8)
-                            .background(Color.alpseOrange)
+                            .background(isFormValid ? Color.alpseOrange : Color.gray)
                             .cornerRadius(10)
                     }
+                    .disabled(!isFormValid)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                 }
@@ -209,6 +218,21 @@ struct AdminUserInsertView: View {
     @State private var organization: String = ""
     @State private var role: String = "student"
 
+    private var trimmedEmail: String {
+        email.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func isValidEmail(_ value: String) -> Bool {
+        let pattern = #"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        return value.range(of: pattern, options: .regularExpression) != nil
+    }
+
+    private var isFormValid: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        isValidEmail(trimmedEmail) &&
+        password.count >= 6
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -219,9 +243,20 @@ struct AdminUserInsertView: View {
                     TextField("user@alpse.com", text: $email)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
+                        .keyboardType(.emailAddress)
+                    if !trimmedEmail.isEmpty && !isValidEmail(trimmedEmail) {
+                        Text("Invalid email format.")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
                 }
                 Section("Password") {
                     SecureField("At least 6 characters", text: $password)
+                    if !password.isEmpty && password.count < 6 {
+                        Text("Password must be at least 6 characters.")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
                 }
                 Section("Role") {
                     Picker("Role", selection: $role) {
@@ -238,8 +273,8 @@ struct AdminUserInsertView: View {
                 Section {
                     Button {
                         viewModel.createUser(
-                            name: name,
-                            email: email,
+                            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                            email: trimmedEmail,
                             password: password,
                             role: role,
                             organization: organization
@@ -250,12 +285,12 @@ struct AdminUserInsertView: View {
                             .frame(maxWidth: .infinity)
                             .foregroundColor(.white)
                             .padding(.vertical, 8)
-                            .background(Color.alpseOrange)
+                            .background(isFormValid ? Color.alpseOrange : Color.gray)
                             .cornerRadius(10)
                     }
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
-                    .disabled(name.isEmpty || email.isEmpty || password.count < 6)
+                    .disabled(!isFormValid)
                 }
             }
             .navigationTitle("Insert New User")

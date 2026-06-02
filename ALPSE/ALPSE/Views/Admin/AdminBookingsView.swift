@@ -233,6 +233,7 @@ struct AdminBookingUpdateView: View {
     @State private var endTime: Date = Date()
     @State private var status: String = "Pending SA Approval"
     @State private var reason: String = ""
+    @State private var showConflictAlert: Bool = false
 
     private let statusOptions: [String] = [
         "Pending SA Approval",
@@ -241,6 +242,38 @@ struct AdminBookingUpdateView: View {
         "Approved",
         "Rejected"
     ]
+
+    private var isTimeRangeValid: Bool {
+        endTime > startTime
+    }
+
+    private var isReasonValid: Bool {
+        if status == "Rejected" {
+            return !reason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+        return true
+    }
+
+    private var isFormValid: Bool {
+        isTimeRangeValid && isReasonValid
+    }
+
+    private func combinedDate(time: Date) -> Date {
+        let cal = Calendar.current
+        var dayComps = cal.dateComponents([.year, .month, .day], from: date)
+        let timeComps = cal.dateComponents([.hour, .minute], from: time)
+        dayComps.hour = timeComps.hour
+        dayComps.minute = timeComps.minute
+        return cal.date(from: dayComps) ?? time
+    }
+
+    private var hasTimeConflict: Bool {
+        let newStart = combinedDate(time: startTime)
+        let newEnd = combinedDate(time: endTime)
+        return bookedRangesOnSelectedDate.contains { range in
+            newStart < range.end && newEnd > range.start
+        }
+    }
 
     private var currentBookingDate: Date {
         Calendar.current.startOfDay(for: booking.date.dateValue())
@@ -320,25 +353,34 @@ struct AdminBookingUpdateView: View {
                     }
                 }
 
+                if !isTimeRangeValid {
+                    Section {
+                        Text("End time must be after start time.")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
+
+                if status == "Rejected" && !isReasonValid {
+                    Section {
+                        Text("Rejection reason is required.")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
+
                 Section {
                     Button {
-                        viewModel.updateBooking(
-                            id: booking.id,
-                            date: date,
-                            startTime: startTime,
-                            endTime: endTime,
-                            status: status,
-                            reason: reason
-                        )
-                        dismiss()
+                        attemptSave()
                     } label: {
                         Text("Save")
                             .frame(maxWidth: .infinity)
                             .foregroundColor(.white)
                             .padding(.vertical, 8)
-                            .background(Color.alpseOrange)
+                            .background(isFormValid ? Color.alpseOrange : Color.gray)
                             .cornerRadius(10)
                     }
+                    .disabled(!isFormValid)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                 }
@@ -350,11 +392,33 @@ struct AdminBookingUpdateView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .alert("Time Conflict",
+                   isPresented: $showConflictAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("The selected time overlaps with another booking for this room. Please pick a different slot (see red entries in Room Availability).")
+            }
             .onAppear {
                 prefill()
                 viewModel.fetchRoomBookings(roomId: booking.roomId, excluding: booking.id)
             }
         }
+    }
+
+    private func attemptSave() {
+        if status != "Rejected" && hasTimeConflict {
+            showConflictAlert = true
+            return
+        }
+        viewModel.updateBooking(
+            id: booking.id,
+            date: date,
+            startTime: combinedDate(time: startTime),
+            endTime: combinedDate(time: endTime),
+            status: status,
+            reason: reason
+        )
+        dismiss()
     }
 
     private func legendDot(color: Color, label: String) -> some View {

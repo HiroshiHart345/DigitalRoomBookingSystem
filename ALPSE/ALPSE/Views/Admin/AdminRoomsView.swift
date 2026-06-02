@@ -163,8 +163,26 @@ struct AdminRoomFormView: View {
     @State private var capacityText: String = ""
     @State private var isFaculty: Bool = false
     @State private var facultyName: String = ""
+    @State private var showDuplicateAlert: Bool = false
 
     private var isEditing: Bool { existingRoom != nil }
+
+    private var trimmedName: String {
+        name.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var capacityValue: Int {
+        Int(capacityText) ?? 0
+    }
+
+    private var isFormValid: Bool {
+        guard !trimmedName.isEmpty else { return false }
+        guard capacityValue > 0 else { return false }
+        if isFaculty && facultyName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return false
+        }
+        return true
+    }
 
     var body: some View {
         NavigationStack {
@@ -191,9 +209,10 @@ struct AdminRoomFormView: View {
                             .frame(maxWidth: .infinity)
                             .foregroundColor(.white)
                             .padding(.vertical, 8)
-                            .background(Color.alpseOrange)
+                            .background(isFormValid ? Color.alpseOrange : Color.gray)
                             .cornerRadius(10)
                     }
+                    .disabled(!isFormValid)
                     .listRowInsets(EdgeInsets())
                     .listRowBackground(Color.clear)
                 }
@@ -204,6 +223,12 @@ struct AdminRoomFormView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
+            }
+            .alert("Duplicate Room Name",
+                   isPresented: $showDuplicateAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("A room with the name \"\(trimmedName)\" already exists. Please choose a different name.")
             }
             .onAppear(perform: prefill)
         }
@@ -219,18 +244,24 @@ struct AdminRoomFormView: View {
     }
 
     private func save() {
-        let capacity = Int(capacityText) ?? 0
+        let excludeId = existingRoom?.id
+        if viewModel.isDuplicateName(trimmedName, excludingId: excludeId) {
+            showDuplicateAlert = true
+            return
+        }
+
+        let capacity = capacityValue
         if let room = existingRoom {
             viewModel.updateRoom(
                 id: room.id,
-                name: name,
+                name: trimmedName,
                 capacity: capacity,
                 isFaculty: isFaculty,
                 facultyName: facultyName
             )
         } else {
             viewModel.createRoom(
-                name: name,
+                name: trimmedName,
                 capacity: capacity,
                 isFaculty: isFaculty,
                 facultyName: facultyName

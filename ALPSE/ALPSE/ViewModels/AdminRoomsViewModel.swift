@@ -14,6 +14,15 @@ class AdminRoomsViewModel: ObservableObject {
 
     private let repository = RoomRepository()
 
+    func isDuplicateName(_ name: String, excludingId: String? = nil) -> Bool {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !trimmed.isEmpty else { return false }
+        return rooms.contains { room in
+            if let exclude = excludingId, room.id == exclude { return false }
+            return room.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == trimmed
+        }
+    }
+
     func fetchRooms() {
         isLoading = true
         repository.fetchRooms { [weak self] result in
