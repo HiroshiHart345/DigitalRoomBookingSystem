@@ -48,4 +48,67 @@ class RoomRepository {
 
     }
 
+    func createRoom(
+        room: Room,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+
+        let data: [String: Any] = [
+            "name": room.name,
+            "capacity": room.capacity,
+            "facultyRoom": room.facultyRoom,
+            "facultyName": room.facultyName,
+            "status": room.status
+        ]
+
+        db.collection("rooms")
+            .addDocument(data: data) { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+    }
+
+    func updateRoom(
+        room: Room,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+
+        let data: [String: Any] = [
+            "name": room.name,
+            "capacity": room.capacity,
+            "facultyRoom": room.facultyRoom,
+            "facultyName": room.facultyName,
+            "status": room.status
+        ]
+
+        db.collection("rooms")
+            .document(room.id)
+            .setData(data, merge: true) { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+    }
+
+    func deleteRoom(
+        roomId: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+
+        db.collection("rooms")
+            .document(roomId)
+            .delete { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+    }
+
 }

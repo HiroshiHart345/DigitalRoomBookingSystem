@@ -190,7 +190,153 @@ class BookingRepository {
         if !rejectionReason.isEmpty {
             updateData["rejectionReason"] = rejectionReason
         }
-        
+
+        db.collection("bookings")
+            .document(bookingId)
+            .updateData(updateData) { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+    }
+
+    func fetchAllBookings(
+        completion: @escaping (Result<[Booking], Error>) -> Void
+    ) {
+
+        db.collection("bookings")
+            .order(by: "createdAt", descending: true)
+            .getDocuments { snapshot, error in
+
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+
+                guard let documents = snapshot?.documents else {
+                    completion(.success([]))
+                    return
+                }
+
+                let bookings = documents.map { doc -> Booking in
+                    let data = doc.data()
+                    return Booking(
+                        id: doc.documentID,
+                        roomId: data["roomId"] as? String ?? "",
+                        roomName: data["roomName"] as? String ?? "",
+                        roomCapacity: data["roomCapacity"] as? Int ?? 0,
+                        userId: data["userId"] as? String ?? "",
+                        userName: data["userName"] as? String ?? "",
+                        organization: data["organization"] as? String ?? "",
+                        activityName: data["activityName"] as? String ?? "",
+                        description: data["description"] as? String ?? "",
+                        date: data["date"] as? Timestamp ?? Timestamp(),
+                        startTime: data["startTime"] as? Timestamp ?? Timestamp(),
+                        endTime: data["endTime"] as? Timestamp ?? Timestamp(),
+                        status: data["status"] as? String ?? "",
+                        rejectionReason: data["rejectionReason"] as? String ?? "",
+                        createdAt: data["createdAt"] as? Timestamp ?? Timestamp(),
+                        facultyName: data["facultyName"] as? String ?? ""
+                    )
+                }
+
+                completion(.success(bookings))
+            }
+    }
+
+    func deleteBooking(
+        bookingId: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+
+        db.collection("bookings")
+            .document(bookingId)
+            .delete { error in
+                if let error = error {
+                    completion(.failure(error))
+                } else {
+                    completion(.success(()))
+                }
+            }
+    }
+
+    /// Returns all non-rejected bookings for a given room. Optionally excludes
+    /// one booking ID (used when editing — we don't want to flag the booking
+    /// being edited as a conflict against itself).
+    func fetchBookingsForRoom(
+        roomId: String,
+        excludingBookingId: String? = nil,
+        completion: @escaping (Result<[Booking], Error>) -> Void
+    ) {
+
+        db.collection("bookings")
+            .whereField("roomId", isEqualTo: roomId)
+            .getDocuments { snapshot, error in
+
+                if let error = error {
+                    completion(.failure(error))
+                    return
+                }
+
+                guard let documents = snapshot?.documents else {
+                    completion(.success([]))
+                    return
+                }
+
+                let bookings: [Booking] = documents.compactMap { doc in
+                    if let exclude = excludingBookingId, doc.documentID == exclude {
+                        return nil
+                    }
+                    let data = doc.data()
+                    let status = (data["status"] as? String ?? "").lowercased()
+                    if status.contains("reject") {
+                        return nil
+                    }
+                    return Booking(
+                        id: doc.documentID,
+                        roomId: data["roomId"] as? String ?? "",
+                        roomName: data["roomName"] as? String ?? "",
+                        roomCapacity: data["roomCapacity"] as? Int ?? 0,
+                        userId: data["userId"] as? String ?? "",
+                        userName: data["userName"] as? String ?? "",
+                        organization: data["organization"] as? String ?? "",
+                        activityName: data["activityName"] as? String ?? "",
+                        description: data["description"] as? String ?? "",
+                        date: data["date"] as? Timestamp ?? Timestamp(),
+                        startTime: data["startTime"] as? Timestamp ?? Timestamp(),
+                        endTime: data["endTime"] as? Timestamp ?? Timestamp(),
+                        status: data["status"] as? String ?? "",
+                        rejectionReason: data["rejectionReason"] as? String ?? "",
+                        createdAt: data["createdAt"] as? Timestamp ?? Timestamp(),
+                        facultyName: data["facultyName"] as? String ?? ""
+                    )
+                }
+
+                completion(.success(bookings))
+            }
+    }
+
+    /// Admin-side update — overwrites date, time, status, and reason fields.
+    func adminUpdateBooking(
+        bookingId: String,
+        date: Timestamp,
+        startTime: Timestamp,
+        endTime: Timestamp,
+        status: String,
+        rejectionReason: String,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+
+        let updateData: [String: Any] = [
+            "date": date,
+            "startTime": startTime,
+            "endTime": endTime,
+            "status": status,
+            "rejectionReason": rejectionReason
+        ]
+
         db.collection("bookings")
             .document(bookingId)
             .updateData(updateData) { error in

@@ -8,12 +8,15 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var viewModel = AuthViewModel.shared
-
+    
     var body: some View {
         NavigationStack {
             if let user = viewModel.loggedInUser {
-                if user.role.lowercased() == "student" {
+                let normalizedRole = user.role.lowercased()
+                if normalizedRole == "student" {
                     BookingHistoryView(user: user)
+                } else if normalizedRole == "admin" {
+                    AdminMainTabView(user: user)
                 } else {
                     StaffApprovalListView(user: user)
                 }
