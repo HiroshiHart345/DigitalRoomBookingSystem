@@ -15,16 +15,19 @@ enum HistoryFilter: String, CaseIterable {
 }
 
 struct BookingHistoryView: View {
+    
+    @StateObject private var viewModel = HistoryViewModel()
+    
     let user: UserModel
-    @State private var bookings: [Booking] = []
+    
     @State private var selectedFilter: HistoryFilter = .all
     @State private var showProfileSheet = false
     
     var filteredBookings: [Booking] {
         switch selectedFilter {
-        case .all: return bookings
-        case .pending: return bookings.filter { $0.status.contains("Pending") }
-        case .finished: return bookings.filter { $0.status == "Approved" || $0.status.contains("Rejected") }
+        case .all: return viewModel.bookings
+        case .pending: return viewModel.bookings.filter { $0.status.contains("Pending") }
+        case .finished: return viewModel.bookings.filter { $0.status == "Approved" || $0.status.contains("Rejected") }
         }
     }
     
@@ -113,7 +116,9 @@ struct BookingHistoryView: View {
                 ProfileView(user: user)
             }
             .onAppear {
-                fetchBookings()
+                viewModel.fetchBookings(
+                    userId: user.id
+                )
             }
         }
     }
@@ -126,34 +131,5 @@ struct BookingHistoryView: View {
         return .gray
     }
     
-    func fetchBookings() {
-        Firestore.firestore()
-            .collection("bookings")
-            .whereField("userId", isEqualTo: user.id)
-            .getDocuments { snapshot, error in
-                guard let documents = snapshot?.documents else { return }
-                bookings = documents.compactMap { doc in
-                    let data = doc.data()
-                    return Booking(
-                        id: doc.documentID,
-                        roomId: data["roomId"] as? String ?? "",
-                        roomName: data["roomName"] as? String ?? "",
-                        roomCapacity: data["roomCapacity"] as? Int ?? 0,
-                        userId: data["userId"] as? String ?? "",
-                        userName: data["userName"] as? String ?? "",
-                        organization: data["organization"] as? String ?? "",
-                        activityName: data["activityName"] as? String ?? "",
-                        description: data["description"] as? String ?? "",
-                        date: data["date"] as? Timestamp ?? Timestamp(),
-                        startTime: data["startTime"] as? Timestamp ?? Timestamp(),
-                        endTime: data["endTime"] as? Timestamp ?? Timestamp(),
-                        status: data["status"] as? String ?? "",
-                        rejectionReason: data["rejectionReason"] as? String ?? "",
-                        createdAt: data["createdAt"] as? Timestamp ?? Timestamp(),
-                        facultyName: data["facultyName"] as? String ?? ""
-                    )
-                }
-            }
-    }
 }
 
