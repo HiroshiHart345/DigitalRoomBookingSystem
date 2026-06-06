@@ -140,7 +140,7 @@ class AuthViewModel: ObservableObject {
     
     func logout() {
         do {
-            try Auth.auth().signOut()
+            try authService.logout() 
             DispatchQueue.main.async {
                 self.loggedInUser = nil
             }
