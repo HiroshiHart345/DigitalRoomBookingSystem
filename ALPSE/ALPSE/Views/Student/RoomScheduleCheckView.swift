@@ -12,8 +12,9 @@ struct RoomScheduleCheckView: View {
     let room: Room
     let user: UserModel
     
+    @StateObject private var viewModel = AdminBookingsViewModel()
+    
     @State private var selectedDate = Date()
-    @State private var allRoomBookings: [Booking] = []
     @State private var selectedSlots: [String] = []
     
     var generatedTimeSlots: [String] {
@@ -88,7 +89,12 @@ struct RoomScheduleCheckView: View {
             }
         }
         .navigationTitle(room.name)
-        .onAppear { fetchBookings() }
+        .onAppear {
+            viewModel.fetchRoomBookings(
+                roomId: room.id,
+                excluding: ""
+            )
+        }
         .onChange(of: selectedDate) {
             selectedSlots.removeAll()
         }
@@ -116,7 +122,7 @@ struct RoomScheduleCheckView: View {
         
         let calendar = Calendar.current
         
-        let bookingsOnDate = allRoomBookings.filter { booking in
+        let bookingsOnDate = viewModel.roomBookings.filter { booking in
             
             calendar.isDate(
                 booking.date.dateValue(),
@@ -159,36 +165,4 @@ struct RoomScheduleCheckView: View {
         }
     }
     
-    
-    // MARK: - QUERY FIREBASE
-    func fetchBookings() {
-        Firestore.firestore()
-            .collection("bookings")
-            .whereField("roomId", isEqualTo: room.id)
-            .getDocuments { snapshot, error in
-                guard let documents = snapshot?.documents else { return }
-                
-                self.allRoomBookings = documents.compactMap { doc in
-                    let data = doc.data()
-                    return Booking(
-                        id: doc.documentID,
-                        roomId: data["roomId"] as? String ?? "",
-                        roomName: data["roomName"] as? String ?? "",
-                        roomCapacity: data["roomCapacity"] as? Int ?? 0,
-                        userId: data["userId"] as? String ?? "",
-                        userName: data["userName"] as? String ?? "",
-                        organization: data["organization"] as? String ?? "",
-                        activityName: data["activityName"] as? String ?? "",
-                        description: data["description"] as? String ?? "",
-                        date: data["date"] as? Timestamp ?? Timestamp(),
-                        startTime: data["startTime"] as? Timestamp ?? Timestamp(),
-                        endTime: data["endTime"] as? Timestamp ?? Timestamp(),
-                        status: data["status"] as? String ?? "",
-                        rejectionReason: data["rejectionReason"] as? String ?? "",
-                        createdAt: data["createdAt"] as? Timestamp ?? Timestamp(),
-                        facultyName: data["facultyName"] as? String ?? ""
-                    )
-                }
-            }
-    }
 }
