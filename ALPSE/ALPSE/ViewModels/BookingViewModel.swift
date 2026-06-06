@@ -18,70 +18,10 @@ class BookingViewModel: ObservableObject {
     
     private let repository = BookingRepository()
     
-    func submitBooking(room: Room, user: UserModel, selectedDate: Date, timeSlot: String) {
-        let timeComponents = timeSlot.components(separatedBy: " - ")
-        guard timeComponents.count == 2 else {
-            self.errorMessage = "Format waktu tidak valid."
-            return
-        }
-        
-        let startTimeString = timeComponents[0]
-        let endTimeString = timeComponents[1]
-        
-        guard let startDateTime = combineDateWithTimeString(date: selectedDate, timeString: startTimeString),
-              let endDateTime = combineDateWithTimeString(date: selectedDate, timeString: endTimeString) else {
-            self.errorMessage = "Gagal memproses kalkulasi waktu."
-            return
-        }
-        
-        if endDateTime <= startDateTime {
-            errorMessage = "Waktu selesai harus lebih besar dari waktu mulai."
-            successMessage = ""
-            return
-        }
-        
-        let start = Timestamp(date: startDateTime)
-        let end = Timestamp(date: endDateTime)
-        let status = "Pending SA Approval"
-        
-        let booking = Booking(
-            id: "",
-            roomId: room.id,
-            roomName: room.name,
-            roomCapacity: room.capacity,
-            userId: user.id,
-            userName: user.name,
-            organization: user.organization,
-            activityName: self.activityName,
-            description: self.description,
-            date: Timestamp(date: selectedDate),
-            startTime: start,
-            endTime: end,
-            status: status,
-            rejectionReason: "",
-            createdAt: Timestamp(date: Date()),
-            facultyName: room.facultyName
-        )
-        
-        repository.createBookingSafe(booking: booking) { [weak self] result in
-            DispatchQueue.main.async {
-                guard let self = self else { return }
-                switch result {
-                case .success:
-                    self.successMessage = "Booking Submitted"
-                    self.errorMessage = ""
-                case .failure(let error):
-                    self.errorMessage = error.localizedDescription
-                    self.successMessage = ""
-                }
-            }
-        }
-    }
-    
-    // MARK: - Helper Function
+    //  Helper Function
     private func combineDateWithTimeString(date: Date, timeString: String) -> Date? {
         let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH.mm" // Sesuaikan dengan format string di UI-mu
+        timeFormatter.dateFormat = "HH.mm"
         
         guard let timeDate = timeFormatter.date(from: timeString) else {
             return nil
